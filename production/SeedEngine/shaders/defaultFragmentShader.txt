@@ -1,0 +1,102 @@
+#version 400 core
+
+in vec2 pass_textureCoords;
+in vec3 surfaceNormal;
+in vec3 toLightVector;
+in vec3 toCameraVector;
+
+out vec4 color_out;
+
+uniform sampler2D texture_diffuse0;
+uniform sampler2D texture_specular0;
+
+uniform vec3 lightColor;
+
+
+//Channel toggles
+
+uniform bool lightEnabled;
+
+uniform bool emissiveColorEnabled;
+
+
+uniform bool baseColorEnabled;
+uniform bool metallicEnabled;
+
+uniform bool specularEnabled;
+uniform float specular;
+
+uniform bool roughnessEnabled;
+
+uniform bool opacityEnabled;
+
+uniform bool opacityMaskEnabled;
+
+uniform bool normalEnabled;
+
+uniform bool positionOffsetEnabled;
+
+uniform bool displacementEnabled;
+
+uniform bool tessellationEnabled;
+
+uniform bool subsurfaceEnabled;
+
+uniform bool ambientOcclusionEnabled;
+
+uniform bool refractionEnabled;
+
+
+void main(void) {
+
+    if (baseColorEnabled) {
+        vec4 textureColor = texture(texture_diffuse0, pass_textureCoords);
+
+        vec4 baseColor = textureColor;
+
+        color_out = baseColor;
+    } else {
+        color_out = vec4(1,1,1,1);
+    }
+
+    if (lightEnabled) {
+        vec3 unitNormal = normalize(surfaceNormal);
+        vec3 unitLightVector = normalize(toLightVector);
+
+        float nDot1 = dot(unitNormal, unitLightVector);
+        float brightness = max(nDot1, 0.2);
+
+        vec4 pointLight = vec4(lightColor, 1.0) * brightness;
+
+        color_out = color_out * pointLight;
+
+        if (specularEnabled) {
+            vec3 unitVectorToCamera = normalize(toCameraVector);
+            vec3 lightDirection = -unitVectorToCamera;
+            vec3 specularLightDirection = reflect(lightDirection, unitNormal);
+
+            float specularFactor = dot(specularLightDirection, unitVectorToCamera);
+            specularFactor = pow(max(specularFactor, 0.0) * specular, 8);
+
+            vec4 specular = specularFactor * vec4(1,1,1,1);
+
+            if (roughnessEnabled) {
+
+            }
+
+            color_out = color_out + specular;
+
+        } else {
+
+        }
+    } else {
+
+    }
+    if (opacityMaskEnabled) {
+        if (color_out.a == 0) {
+            discard;
+        }
+    }
+    //use discard for opacity mask
+
+}
